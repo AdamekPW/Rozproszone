@@ -4,6 +4,7 @@ Request::Request(int timestamp, int PID)
 {
     this->timestamp = timestamp;
     this->PID = PID;
+
 }
 
 Request::Request(Message message)
@@ -40,7 +41,7 @@ Message::Message(int type, int timestamp, int PID)
     this->PID = PID;
 }
 
-void Send(Message& message, int destination)
+void Send(Message message, int destination)
 {
     // wysyłamy tablicę aby nie komplikować kodu, można wysyłac structy ale wymaga to tworzenia specjalnych typów (zbędna praca)
     int _message[3];
@@ -51,7 +52,7 @@ void Send(Message& message, int destination)
     MPI_Send(_message, 3, MPI_INT, destination, 0, MPI_COMM_WORLD);
 }
 
-void SendBroadcast(Message& message, int source, int n)
+void SendBroadcast(Message message, int source, int n)
 {
     int _message[3];
     _message[0] = message.type;
@@ -66,6 +67,35 @@ void SendBroadcast(Message& message, int source, int n)
         }
     }
     
+}
+
+int Max(int clock, int pckClock)
+{
+    return clock >= pckClock ? clock : pckClock;
+}
+
+
+int GetIndex(vector<Request> &requestVec, Request &element)
+{
+    for (int i = 0; i < requestVec.size(); i++)
+        if (requestVec[i] == element) return i;
+
+    return -1;
+}
+
+int GetOldestActiveIndex(vector<Request> &requestVec, int PID)
+{
+    int currentBestIndex = -1;
+    int currentBestTimestamp = numeric_limits<int>::max();
+    for (int i = 0; i < requestVec.size(); i++)
+    {
+        if (requestVec[i].PID == PID && requestVec[i].isActive && requestVec[i].timestamp < currentBestTimestamp)
+        {
+            currentBestIndex = i;
+            currentBestTimestamp = requestVec[i].timestamp;
+        }
+    }
+    return currentBestIndex;
 }
 
 // bool Recv(Request& Request, int type, int source)

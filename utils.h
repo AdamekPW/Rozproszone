@@ -3,6 +3,7 @@
 #include <iostream>
 #include <chrono>
 #include <mpi.h>
+#include <vector>
 
 using namespace std;
 
@@ -17,24 +18,6 @@ using namespace std;
 #define COOLDOWN_TIME_US 1000 // czas cooldownu dla miasta w mikrosekundach
 
 
-
-struct Request
-{
-    int timestamp;
-    int PID;
-
-    Request(int timestamp, int PID);
-    Request(Message message);
-    bool operator<(const Request& other) const {
-        if (timestamp == other.timestamp) {
-            return PID > other.PID; // W przypadku remisu, mniejszy PID ma wyższy priorytet
-        }
-        return timestamp > other.timestamp; // Mniejszy timestamp ma wyższy priorytet
-    }
-};
-
-
-
 struct Message 
 {
     int type;
@@ -43,6 +26,31 @@ struct Message
 
     Message(int tab[3]);
     Message(int type, int timestamp, int PID);
+};
+
+
+struct Request
+{
+    int timestamp;
+    int PID;
+    bool isActive = true;
+
+    Request(int timestamp, int PID);
+    Request(Message message);
+    bool operator<(const Request& other) const {
+        if (timestamp == other.timestamp) {
+            return PID < other.PID; // W przypadku remisu, mniejszy PID ma wyższy priorytet
+        }
+        return timestamp < other.timestamp; // Mniejszy timestamp ma wyższy priorytet
+    }
+
+    bool operator==(const Request& other) const {
+        if (timestamp == other.timestamp && PID == other.PID && isActive == other.isActive){
+            return true;
+        }
+        return false;
+    }
+
 };
 
 
@@ -56,5 +64,10 @@ struct Cooldown
     bool IsCooldownOver();
 };
 
-void Send(Message& message, int destination);
-void SendBroadcast(Message& message, int source, int n);
+void Send(Message message, int destination);
+void SendBroadcast(Message message, int source, int n);
+
+int Max(int clock, int pckClock);
+
+int GetIndex(vector<Request> &requestVec, Request &element);
+int GetOldestActiveIndex(vector<Request> &requestVec, int PID);
