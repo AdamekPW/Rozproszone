@@ -16,15 +16,14 @@ Request::Request(Message message)
 Cooldown::Cooldown(int city)
 {
     this->city = city;
-    this->startTime = chrono::steady_clock::now();
+    this->endTime = GetCooldownTime();
 }
 
 bool Cooldown::IsCooldownOver()
 {
     auto now = chrono::steady_clock::now();
-    auto duration = chrono::duration_cast<chrono::microseconds>(now - this->startTime);
     
-    return duration.count() > COOLDOWN_TIME_US;
+    return now > endTime;
 }
 
 Message::Message(int tab[3])
@@ -98,23 +97,42 @@ int GetOldestActiveIndex(vector<Request> &requestVec, int PID)
     return currentBestIndex;
 }
 
-// bool Recv(Request& Request, int type, int source)
-// {
-//     int _message[2];
+chrono::steady_clock::time_point GetRandomInsectionTime()
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dist(MIN_INSECTION_TIME_US, MAX_INSECTION_TIME_US);
 
-//     MPI_Request request;
-//     MPI_Irecv(_message, 2, MPI_INT, source, type, MPI_COMM_WORLD, &request);
+    int delayUs = dist(gen);
 
-//     MPI_Status status;
-//     int flag = 0;
-//     MPI_Test(&request, &flag, &status);
+    auto now = std::chrono::steady_clock::now();
 
-//     if (flag)
-//     {
-//         Request.timestamp = _message[0];
-//         Request.PID = _message[1];
-//         return true;
-//     }
+    auto delayed_time = now + std::chrono::microseconds(delayUs);
 
-//     return false;
-// }
+    return delayed_time;
+}
+
+
+chrono::steady_clock::time_point GetCooldownTime()
+{
+    return std::chrono::steady_clock::now() + std::chrono::microseconds(COOLDOWN_TIME_US);
+}
+
+
+void PrintColor(string text, int PID) {
+    const char* colors[] = {
+        "\x1B[31m", // Czerwony
+        "\x1B[32m", // Zielony
+        "\x1B[33m", // Żółty
+        "\x1B[34m", // Niebieski
+        "\x1B[35m", // Fioletowy
+        "\x1B[36m", // Cyjan
+        "\x1B[37m", // Biały
+    };
+
+    // Wybór koloru na podstawie pid
+    const char* color = colors[PID % 7]; // Modulo, aby nie wyjść poza tablicę
+
+    // Wypisanie wiadomości w kolorze
+    cout << color << "[" << PID << "] " << text << "\033[0m" << endl; 
+}

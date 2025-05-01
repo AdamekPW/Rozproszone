@@ -4,6 +4,7 @@
 #include <chrono>
 #include <mpi.h>
 #include <vector>
+#include <random>
 
 using namespace std;
 
@@ -15,7 +16,9 @@ using namespace std;
 #define WAIT 1
 #define INSECTION 2
 
-#define COOLDOWN_TIME_US 1000 // czas cooldownu dla miasta w mikrosekundach
+#define MIN_INSECTION_TIME_US 10000000
+#define MAX_INSECTION_TIME_US 40000000
+#define COOLDOWN_TIME_US 10000000 // czas cooldownu dla miasta w mikrosekundach
 
 
 struct Message 
@@ -58,7 +61,7 @@ struct Request
 struct Cooldown
 {
     int city;
-    chrono::steady_clock::time_point startTime;
+    chrono::steady_clock::time_point endTime;
 
     Cooldown(int city);
     bool IsCooldownOver();
@@ -71,3 +74,9 @@ int Max(int clock, int pckClock);
 
 int GetIndex(vector<Request> &requestVec, Request &element);
 int GetOldestActiveIndex(vector<Request> &requestVec, int PID);
+
+chrono::steady_clock::time_point GetRandomInsectionTime();
+chrono::steady_clock::time_point GetCooldownTime();
+
+void PrintColor(string text, int PID);
+

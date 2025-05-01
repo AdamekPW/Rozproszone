@@ -3,6 +3,7 @@
 #include <vector>
 #include <queue>
 #include <algorithm>
+#include <chrono>
 
 #include "utils.h"
 
@@ -25,8 +26,9 @@ int main(int argc, char** argv)
     int state = REST;
     int ACK_counter = 0;
     
-    int myCity = -1;
+    int myRequestIndex = -1;
     Request myRequest(-1, -1);
+    chrono::steady_clock::time_point insectionTime;
 
     vector<priority_queue<Request>> CityQueues(m);
     queue<Cooldown> CityCooldownQueue;
@@ -38,6 +40,7 @@ int main(int argc, char** argv)
 
     MPI_Comm_size(MPI_COMM_WORLD, &n);
 
+    PrintColor("Started!", i);
     
 
     // vector potrzebny do zarządzania wiadomościami bez blokowania
@@ -76,17 +79,19 @@ int main(int argc, char** argv)
         if (state == REST)
         {
             clock++;
-            Message i_want_city_request(REQ, clock, i);
-            SendBroadcast(i_want_city_request, i, n);
+            Message i_want_city_request_message(REQ, clock, i);
+            SendBroadcast(i_want_city_request_message, i, n);
             ACK_counter = 0;
 
-            myRequest = Request(i_want_city_request);
-            RequestQueue.push_back(Request(myRequest));
+            myRequest = Request(i_want_city_request_message);
+            RequestQueue.push_back(myRequest);
             std::sort(RequestQueue.begin(), RequestQueue.end());
 
-            myCity = GetIndex(RequestQueue, myRequest) % m;
-            
+            myRequestIndex = GetIndex(RequestQueue, myRequest);
 
+            CityQueues[myRequestIndex % m].push(myRequest);
+            
+            // obsługa wiadomości
             while (!unhandledMessages.empty())
             {
                 Message m = unhandledMessages.front();
@@ -110,17 +115,6 @@ int main(int argc, char** argv)
         } 
         else if (state == WAIT)
         {
-            if (ACK_counter == n - 1)
-            {
-                std::sort(RequestQueue.begin(), RequestQueue.end());
-                myCity = GetOldestActiveIndex(RequestQueue, i) % m;
-
-                // TODO budowanie kolejek
-
-                state = INSECTION; 
-            }
-
-
             while (!unhandledMessages.empty())
             {
                 Message m = unhandledMessages.front();
@@ -145,32 +139,94 @@ int main(int argc, char** argv)
                 }
                 else if (m.type == REL)
                 {
-
+                    // zaznaczamy że najstarszy nieoznaczony REQ od adresata jest już uwolniony
+                    int index = GetOldestActiveIndex(RequestQueue, m.PID);
+                    RequestQueue[index].isActive = false;
                 }
 
                 unhandledMessages.pop();
             }
+
+            if (ACK_counter == n - 1)
+            {
+                int myCity = myRequestIndex % m;
+                
+                // zaczynamy od czyszczenia, nie jest to najbardziej optymalne ale na start styknie
+                CityQueues = vector<priority_queue<Request>>(m);
+
+                // budowanie kolejek, przeglądamy każdy element posortowanej tablicy aż do naszego
+                for (int i = 0; i < myRequestIndex; i++)
+                {
+                    int City = i % m;
+                    if (RequestQueue[i].isActive)
+                    {
+                        CityQueues[City].push(RequestQueue[i]);
+                    }
+                }
+
+                // nasze żądanie jest na szczycie kolejki miasta
+                if (CityQueues[myCity].top() == myRequest)
+                {
+                    state = INSECTION; 
+                    insectionTime = GetRandomInsectionTime();
+                }
+
+            }
+
         }
         else if (state == INSECTION) 
         {
-
             while (!unhandledMessages.empty())
             {
                 Message m = unhandledMessages.front();
+                Request incomingRequest(m);
                 
                 if (m.type == REQ)
                 {
-
-                } else if (m.type == REL)
+                    // dodaje REQ do swojej kolejki żądań i odsyła ACK
+                    RequestQueue.push_back(incomingRequest);
+                    clock++;
+                    Send(Message(ACK, clock, i), m.PID);
+                } 
+                else if (m.type == REL)
                 {
-
+                    // zaznaczamy że najstarszy nieoznaczony REQ od adresata jest już uwolniony
+                    int index = GetOldestActiveIndex(RequestQueue, m.PID);
+                    RequestQueue[index].isActive = false;
                 }
 
                 unhandledMessages.pop();
             }
+
+            auto currentTime = std::chrono::steady_clock::now();
+            if (currentTime >= insectionTime)
+            {   
+                // dodajemy do kolejki cooldownu
+                CityCooldownQueue.push(Cooldown(myRequestIndex));
+          
+                state = REST;
+            }
         }
 
-        
+        // przeglądanie kolejki cooldownu
+        if (!CityCooldownQueue.empty())
+        {
+            Cooldown CurrentCity = CityCooldownQueue.front();
+            while (CurrentCity.IsCooldownOver())
+            {
+                int oldestIndex = GetOldestActiveIndex(RequestQueue, i);
+                RequestQueue[oldestIndex].isActive = false;
+
+                clock++;
+                SendBroadcast(Message(REL, clock, i), i, n);
+
+                CityCooldownQueue.pop();
+
+                if (CityCooldownQueue.empty()) break;
+
+                CurrentCity = CityCooldownQueue.front();
+            }
+        }
 
     }
 
