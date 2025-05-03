@@ -24,7 +24,7 @@ int main(int argc, char** argv)
     
 
     int i; // identyfikator procesu
-    int n, m = 10; // liczba procesów i liczba miast
+    int n, m = 2; // liczba procesów i liczba miast
     int clock = 0; // czas zegarów lamporta
     int state = REST;
     int ACK_counter = 0;
@@ -33,7 +33,6 @@ int main(int argc, char** argv)
     Request myRequest(-1, -1);
     chrono::steady_clock::time_point insectionTime;
 
-    vector<priority_queue<Request>> CityQueues(m);
     queue<Cooldown> CityCooldownQueue;
     vector<Request> RequestQueue;
 
@@ -142,15 +141,15 @@ int main(int argc, char** argv)
 
                     
                     //TODO można jakoś zoptymalizować, garbage collection tez da radę
-                    std::sort(RequestQueue.begin(), RequestQueue.end());
-                    int myCity = GetIndex(RequestQueue, myRequest) % m;
-                    int incomingCity = GetIndex(RequestQueue, incomingRequest) % m;
+                    // std::sort(RequestQueue.begin(), RequestQueue.end());
+                    // int myCity = GetIndex(RequestQueue, myRequest) % m;
+                    // int incomingCity = GetIndex(RequestQueue, incomingRequest) % m;
 
-                    if (incomingRequest.IsBetterThan(myRequest) || myCity != incomingCity)
-                    {
+                    // if (incomingRequest.IsBetterThan(myRequest) || myCity != incomingCity)
+                    // {
                         clock++;
                         Send(Message(ACK, clock, i), mes.PID);
-                    }
+                    //}
                    
                 } 
                 else if (mes.type == ACK)
@@ -174,7 +173,7 @@ int main(int argc, char** argv)
                 PrintColor(i, clock, "W2");
                 #endif
 
-                PrintColor(i, clock, "Uzbierano wszystkie ACK!");
+                //PrintColor(i, clock, "Uzbierano wszystkie ACK!");
 
                 //std::this_thread::sleep_for(std::chrono::seconds(10)); 
 
@@ -183,27 +182,26 @@ int main(int argc, char** argv)
                 myRequestIndex = GetIndex(RequestQueue, myRequest);
                 
                 int myCity = myRequestIndex % m;
-                
-                // zaczynamy od czyszczenia, nie jest to najbardziej optymalne ale na start styknie
-                CityQueues = vector<priority_queue<Request>>(m);
-
-                // budowanie kolejek, przeglądamy każdy element posortowanej tablicy aż do naszego
+            
+                Request bestCityRequest(-1, -1);
                 for (int i = 0; i <= myRequestIndex; i++)
                 {
                     int City = i % m;
-                    if (RequestQueue[i].isActive)
+                    if (RequestQueue[i].isActive && City == myCity)
                     {
-                        CityQueues[City].push(RequestQueue[i]);
+                        bestCityRequest = RequestQueue[i];
+                        break;
                     }
                 }
 
                 // nasze żądanie jest na szczycie kolejki miasta
-                if (CityQueues[myCity].top() == myRequest)
+                if (bestCityRequest == myRequest)
                 {
                     state = INSECTION; 
                     insectionTime = GetRandomInsectionTime();
                     PrintColor(i, clock, AddText("Zajmuje",  myCity));
                 }
+                
 
                 #ifdef DEBUG_WAIT
                 PrintColor(i, clock, "W3");
