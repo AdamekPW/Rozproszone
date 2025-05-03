@@ -5,6 +5,7 @@
 #include <mpi.h>
 #include <vector>
 #include <random>
+#include <sstream>
 
 using namespace std;
 
@@ -16,9 +17,9 @@ using namespace std;
 #define WAIT 1
 #define INSECTION 2
 
-#define MIN_INSECTION_TIME_US 10000000
-#define MAX_INSECTION_TIME_US 40000000
-#define COOLDOWN_TIME_US 10000000 // czas cooldownu dla miasta w mikrosekundach
+#define MIN_INSECTION_TIME_US 1000000
+#define MAX_INSECTION_TIME_US 4000000
+#define COOLDOWN_TIME_US 3000000 // czas cooldownu dla miasta w mikrosekundach
 
 
 struct Message 
@@ -40,15 +41,17 @@ struct Request
 
     Request(int timestamp, int PID);
     Request(Message message);
+    bool IsBetterThan(const Request& other);
+
     bool operator<(const Request& other) const {
         if (timestamp == other.timestamp) {
-            return PID < other.PID; // W przypadku remisu, mniejszy PID ma wyższy priorytet
+            return PID < other.PID; 
         }
-        return timestamp < other.timestamp; // Mniejszy timestamp ma wyższy priorytet
+        return timestamp < other.timestamp; 
     }
 
     bool operator==(const Request& other) const {
-        if (timestamp == other.timestamp && PID == other.PID && isActive == other.isActive){
+        if (timestamp == other.timestamp && PID == other.PID){
             return true;
         }
         return false;
@@ -78,5 +81,5 @@ int GetOldestActiveIndex(vector<Request> &requestVec, int PID);
 chrono::steady_clock::time_point GetRandomInsectionTime();
 chrono::steady_clock::time_point GetCooldownTime();
 
-void PrintColor(string text, int PID);
-
+void PrintColor(int PID, int Clock, string text);
+string AddText(string text, int City);

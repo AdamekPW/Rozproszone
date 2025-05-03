@@ -13,6 +13,12 @@ Request::Request(Message message)
     this->PID = message.PID;
 }
 
+bool Request::IsBetterThan(const Request& other)
+{
+    if (this->operator<(other)) return true;
+    return false;
+}
+
 Cooldown::Cooldown(int city)
 {
     this->city = city;
@@ -119,7 +125,7 @@ chrono::steady_clock::time_point GetCooldownTime()
 }
 
 
-void PrintColor(string text, int PID) {
+void PrintColor(int PID, int Clock, string text) {
     const char* colors[] = {
         "\x1B[31m", // Czerwony
         "\x1B[32m", // Zielony
@@ -134,5 +140,12 @@ void PrintColor(string text, int PID) {
     const char* color = colors[PID % 7]; // Modulo, aby nie wyjść poza tablicę
 
     // Wypisanie wiadomości w kolorze
-    cout << color << "[" << PID << "] " << text << "\033[0m" << endl; 
+    cout << color << "[" << PID << "] " << "[" << Clock << "] " << text << "\033[0m" << endl; 
+}
+
+string AddText(string text, int City)
+{
+    stringstream ss;
+    ss << text << " " << City << endl;
+    return ss.str();
 }
