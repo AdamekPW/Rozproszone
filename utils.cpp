@@ -124,6 +124,14 @@ chrono::steady_clock::time_point GetCooldownTime()
     return std::chrono::steady_clock::now() + std::chrono::microseconds(COOLDOWN_TIME_US);
 }
 
+bool GetShouldApplyCity()
+{
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    static std::uniform_real_distribution<double> dist(0.0, 1.0);
+
+    return dist(gen) < CITY_APPLY_PROB;
+}
 
 void PrintColor(int PID, int Clock, string text) {
     const char* colors[] = {
@@ -149,3 +157,4 @@ string AddText(string text, int City)
     ss << text << " " << City << endl;
     return ss.str();
 }
+

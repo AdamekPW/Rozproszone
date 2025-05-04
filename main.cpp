@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <chrono>
 #include <thread>
+#include <array>
 
 #include "utils.h"
 
@@ -24,7 +25,8 @@ int main(int argc, char** argv)
     
 
     int i; // identyfikator procesu
-    int n, m = 2; // liczba procesów i liczba miast
+    int n = 3; // liczba procesów
+    int m = 6; // liczba miast
     int clock = 0; // czas zegarów lamporta
     int state = REST;
     int ACK_counter = 0;
@@ -80,18 +82,25 @@ int main(int argc, char** argv)
             PrintColor(i, clock, "R1");
             #endif
 
-            clock++;
-            Message i_want_city_request_message(REQ, clock, i);
-            SendBroadcast(i_want_city_request_message, i, n);
-            ACK_counter = 0;
+            //TUTAJ LOSUJE CZY CHCE MIASTO
+            // TRUE/FALSE
+            bool do_apply = GetShouldApplyCity();
+            if(do_apply == true)
+            {
+                clock++;
+                Message i_want_city_request_message(REQ, clock, i);
+                SendBroadcast(i_want_city_request_message, i, n);
+                ACK_counter = 0;
+    
+                myRequest = Request(i_want_city_request_message);
+                RequestQueue.push_back(myRequest);
+            }
 
-            myRequest = Request(i_want_city_request_message);
-            RequestQueue.push_back(myRequest);
             
             #ifdef DEBUG_REST
             PrintColor(i, clock, "R2");
             #endif
-
+            //
             // obsługa wiadomości
             while (!unhandledMessages.empty())
             {
@@ -114,8 +123,11 @@ int main(int argc, char** argv)
                 unhandledMessages.pop();
             }
 
-            state = WAIT; // tu można by losowanie czasu przejścia dodać albo coś, ale po co
-            PrintColor(i, clock, "Wchodze do stanu WAIT, zbieram ACK");
+            if(do_apply == true)
+            {
+                state = WAIT;
+                PrintColor(i, clock, "Wchodze do stanu WAIT, zbieram ACK");
+            }
 
             #ifdef DEBUG_REST
             PrintColor(i, clock, "R3");

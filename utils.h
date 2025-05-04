@@ -9,18 +9,19 @@
 
 using namespace std;
 
-#define REQ 1
-#define ACK 2
-#define REL 3
+#define REQ 10
+#define ACK 20
+#define REL 30
 
 #define REST 0
-#define WAIT 1
-#define INSECTION 2
+#define WAIT 10
+#define INSECTION 20
 
 #define MIN_INSECTION_TIME_US 1000000
 #define MAX_INSECTION_TIME_US 4000000
 #define COOLDOWN_TIME_US 3000000 // czas cooldownu dla miasta w mikrosekundach
 
+#define CITY_APPLY_PROB 0.15
 
 struct Message 
 {
@@ -80,6 +81,8 @@ int GetOldestActiveIndex(vector<Request> &requestVec, int PID);
 
 chrono::steady_clock::time_point GetRandomInsectionTime();
 chrono::steady_clock::time_point GetCooldownTime();
+
+bool GetShouldApplyCity();
 
 void PrintColor(int PID, int Clock, string text);
 string AddText(string text, int City);
