@@ -25,8 +25,7 @@ int main(int argc, char** argv)
     
 
     int i; // identyfikator procesu
-    int n = 3; // liczba procesów
-    int m = 6; // liczba miast
+    int n, m = 2; // liczba procesów i liczba miast
     int clock = 0; // czas zegarów lamporta
     int state = REST;
     int ACK_counter = 0;
@@ -85,7 +84,7 @@ int main(int argc, char** argv)
             //TUTAJ LOSUJE CZY CHCE MIASTO
             // TRUE/FALSE
             bool do_apply = GetShouldApplyCity();
-            if(do_apply == true)
+            if(do_apply)
             {
                 clock++;
                 Message i_want_city_request_message(REQ, clock, i);
@@ -123,7 +122,7 @@ int main(int argc, char** argv)
                 unhandledMessages.pop();
             }
 
-            if(do_apply == true)
+            if(do_apply)
             {
                 state = WAIT;
                 PrintColor(i, clock, "Wchodze do stanu WAIT, zbieram ACK");
