@@ -15,6 +15,8 @@ using namespace std;
 //#define DEBUG_WAIT
 //#define DEBUT_INSECTION
 
+#define GARBAGE_COLLECTOR
+
 // kopilacja: mpic++ main.cpp utils.cpp -o rozproszone
 // uruchamianie: mpirun -np 4 ./rozproszone
 // oba: mpic++ main.cpp utils.cpp -o rozproszone && mpirun -np 4 ./rozproszone
@@ -277,6 +279,10 @@ int main(int argc, char** argv)
             }
         }
 
+        //usuwanie śmieci
+        #ifdef GARBAGE_COLLECTOR
+        ClearRequests(RequestQueue, m);
+        #endif
     }
 
     MPI_Finalize();

@@ -158,3 +158,19 @@ string AddText(string text, int City)
     return ss.str();
 }
 
+void ClearRequests(vector<Request> &requestVec, int m)
+{
+    std::sort(requestVec.begin(), requestVec.end());
+    
+    int index = 0;
+    while (index < requestVec.size() && !requestVec[index].isActive) index++;
+
+    int maxIndex = (index / m) * m; // dzięki temu dostajemy zawsze wielokrotność liczby miast
+
+    if (index < m) return;
+
+    //cout << "Usuwanie nieaktywnych miast (" << maxIndex << ")" << endl; 
+
+    requestVec.erase(requestVec.begin(), requestVec.begin() + maxIndex);
+
+}

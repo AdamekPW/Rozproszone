@@ -6,6 +6,7 @@
 #include <vector>
 #include <random>
 #include <sstream>
+#include <algorithm>
 
 using namespace std;
 
@@ -86,3 +87,4 @@ bool GetShouldApplyCity();
 
 void PrintColor(int PID, int Clock, string text);
 string AddText(string text, int City);
+void ClearRequests(vector<Request> &requestVec, int m);
