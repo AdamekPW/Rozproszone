@@ -153,16 +153,10 @@ int main(int argc, char** argv)
                     RequestQueue.push_back(incomingRequest);
 
                     
-                    //TODO można jakoś zoptymalizować, garbage collection tez da radę
-                    // std::sort(RequestQueue.begin(), RequestQueue.end());
-                    // int myCity = GetIndex(RequestQueue, myRequest) % m;
-                    // int incomingCity = GetIndex(RequestQueue, incomingRequest) % m;
 
-                    // if (incomingRequest.IsBetterThan(myRequest) || myCity != incomingCity)
-                    // {
-                        clock++;
-                        Send(Message(ACK, clock, i), mes.PID);
-                    //}
+
+                    clock++;
+                    Send(Message(ACK, clock, i), mes.PID);
                    
                 } 
                 else if (mes.type == ACK)
@@ -188,8 +182,6 @@ int main(int argc, char** argv)
 
                 //PrintColor(i, clock, "Uzbierano wszystkie ACK!");
 
-                //std::this_thread::sleep_for(std::chrono::seconds(10)); 
-
                 std::sort(RequestQueue.begin(), RequestQueue.end());
 
                 myRequestIndex = GetIndex(RequestQueue, myRequest);
@@ -197,24 +189,13 @@ int main(int argc, char** argv)
                 int myCity = myRequestIndex % m;
             
                 Request bestCityRequest(-1, -1);
-                for (int i = 0; i <= myRequestIndex; i++)
-                {
-                    int City = i % m;
-                    if (RequestQueue[i].isActive && City == myCity)
-                    {
-                        bestCityRequest = RequestQueue[i];
-                        break;
-                    }
-                }
 
-                // nasze żądanie jest na szczycie kolejki miasta
-                if (bestCityRequest == myRequest)
-                {
+                int older_index = myRequestIndex - m;
+                if (myRequestIndex < m || (myRequestIndex >= m && !RequestQueue[older_index].isActive)) {
                     state = INSECTION; 
                     insectionTime = GetRandomInsectionTime();
-                    PrintColor(i, clock, AddText("Zajmuje",  myCity));
+                    PrintColor(i, clock, AddText("Zajmuje", myCity));
                 }
-                
 
                 #ifdef DEBUG_WAIT
                 PrintColor(i, clock, "W3");
