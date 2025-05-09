@@ -190,21 +190,12 @@ int main(int argc, char** argv)
             
                 Request bestCityRequest(-1, -1);
 
-                if (myRequestIndex >= m) {
-                    int older_index = myRequestIndex - m;
-                    if (!RequestQueue[older_index].isActive) {
-                        state = INSECTION; 
-                        insectionTime = GetRandomInsectionTime();
-                        PrintColor(i, clock, AddText("Zajmuje", myCity));
-                    }
-                }
-                else
-                {
+                int older_index = myRequestIndex - m;
+                if (myRequestIndex < m || (myRequestIndex >= m && !RequestQueue[older_index].isActive)) {
                     state = INSECTION; 
                     insectionTime = GetRandomInsectionTime();
                     PrintColor(i, clock, AddText("Zajmuje", myCity));
                 }
-
 
                 #ifdef DEBUG_WAIT
                 PrintColor(i, clock, "W3");
