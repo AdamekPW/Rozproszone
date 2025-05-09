@@ -165,9 +165,9 @@ void ClearRequests(vector<Request> &requestVec, int m)
     int index = 0;
     while (index < requestVec.size() && !requestVec[index].isActive) index++;
 
-    int maxIndex = (index / m) * m; // dzięki temu dostajemy zawsze wielokrotność liczby miast
-
     if (index < m) return;
+
+    int maxIndex = (index / m) * m; // dzięki temu dostajemy zawsze wielokrotność liczby miast
 
     //cout << "Usuwanie nieaktywnych miast (" << maxIndex << ")" << endl; 
 
